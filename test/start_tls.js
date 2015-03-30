@@ -94,9 +94,53 @@ test('server upgrade to TLS', function (t) {
         stream.pipe(split()).on('data', function ondata (line) {
             if (/^\d{3}([\s-]|$)/.test(line)) {
                 var f = steps[++ix];
-                if (f) return f(line)
+                if (f) return f(line);
                 this.removeListener('data', ondata);
             }
         });
     });
+});
+
+test('server doesn\'t upgrade to TLS if there is no certificate', function (t) {
+	t.plan(4);
+	t.on('end', function () {
+		server.close();
+	});
+
+	var opts = {
+		domain: 'beep',
+		key: null,
+		cert: null
+	};
+	var server = smtp.createServer(opts, function () {});
+	server.listen(0, function () {
+		var stream = net.connect(server.address().port);
+
+		var steps = [
+			function (line) {
+				t.equal(line, '220 beep');
+				stream.write('ehlo beep\n');
+			},
+			function (line) {
+				t.equal(line, '250-beep');
+			},
+			function (line) {
+				t.equal(line, '250 STARTTLS');
+				stream.write('starttls\n');
+			},
+			function (line) {
+				t.equal(line, '454 TLS is not available.');
+				stream.write('quit\n');
+			}
+		];
+
+		var ix = -1;
+		stream.pipe(split()).on('data', function ondata (line) {
+			if (/^\d{3}([\s-]|$)/.test(line)) {
+				var f = steps[++ix];
+				if (f) return f(line);
+				this.removeListener('data', ondata);
+			}
+		});
+	});
 });
