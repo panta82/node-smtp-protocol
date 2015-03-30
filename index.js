@@ -31,14 +31,12 @@ exports.createServer = function (opts, cb) {
                 //write(503, 'Bad sequence: already using TLS.');
                 return next();
             }
-
-			// https://tools.ietf.org/html/rfc2487
-			// 454 TLS not available due to temporary reason
-			if (!opts.pfx && (!opts.key || !opts.cert)) {
-				write(454, 'TLS is not available.');
-				return next();
-			}
-
+            // https://tools.ietf.org/html/rfc2487
+            // 454 TLS not available due to temporary reason
+            if (!opts.pfx && (!opts.key || !opts.cert)) {
+                write(454, 'TLS is not available.');
+                return next();
+            }
             clienttls = true;
             
             var tserver = tls.createServer(opts);
